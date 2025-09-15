@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron')
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron')
 const path = require('path')
 // 使用绝对路径来确保在asar环境下也能正确加载模块
 const { createNatServer, createNatClient, stopAllConnections } = require(path.join(__dirname, 'nat-service.js'))
@@ -29,10 +29,139 @@ function createWindow () {
   // mainWindow.webContents.openDevTools()
 }
 
+// 创建应用程序菜单（中文）
+function createApplicationMenu() {
+  const menuTemplate = [
+    {
+      label: '文件',
+      submenu: [
+        {
+          label: '退出',
+          accelerator: 'Ctrl+Q',
+          click: () => {
+            stopAllConnections()
+            app.quit()
+          }
+        }
+      ]
+    },
+    {
+      label: '编辑',
+      submenu: [
+        {
+          label: '撤销',
+          accelerator: 'Ctrl+Z',
+          role: 'undo'
+        },
+        {
+          label: '重做',
+          accelerator: 'Ctrl+Y',
+          role: 'redo'
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: '剪切',
+          accelerator: 'Ctrl+X',
+          role: 'cut'
+        },
+        {
+          label: '复制',
+          accelerator: 'Ctrl+C',
+          role: 'copy'
+        },
+        {
+          label: '粘贴',
+          accelerator: 'Ctrl+V',
+          role: 'paste'
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: '全选',
+          accelerator: 'Ctrl+A',
+          role: 'selectAll'
+        }
+      ]
+    },
+    {
+      label: '视图',
+      submenu: [
+        {
+          label: '刷新',
+          accelerator: 'Ctrl+R',
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.reload()
+            }
+          }
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: '开发者工具',
+          accelerator: 'F12',
+          click: () => {
+            if (mainWindow) {
+              mainWindow.webContents.toggleDevTools()
+            }
+          }
+        }
+      ]
+    },
+    {
+      label: '窗口',
+      submenu: [
+        {
+          label: '最小化',
+          accelerator: 'Ctrl+M',
+          role: 'minimize'
+        },
+        {
+          label: '关闭',
+          accelerator: 'Ctrl+W',
+          role: 'close'
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: '前置所有窗口',
+          role: 'front'
+        }
+      ]
+    },
+    {
+      label: '帮助',
+      submenu: [
+        {
+          label: '关于',
+          click: () => {
+            dialog.showMessageBox({ 
+              title: '关于 Nat-Net', 
+              message: 'Nat-Net 内网穿透工具',
+              detail: '版本: 1.0.0\nDPW：Nat-Net@' + new Date().getFullYear(),
+              type: 'info',
+              buttons: ['确定']
+            })
+          }
+        }
+      ]
+    }
+  ]
+
+  const menu = Menu.buildFromTemplate(menuTemplate)
+  Menu.setApplicationMenu(menu)
+}
+
 // Electron 会在初始化完成并且准备好创建浏览器窗口时调用这个方法
 // 部分 API 在 ready 事件触发后才能使用。
 app.whenReady().then(() => {
   createWindow()
+  createApplicationMenu()
 
   app.on('activate', function () {
     // 在 macOS 上，当点击 dock 图标并且没有其他窗口打开时，通常会在应用程序中重新创建一个窗口
